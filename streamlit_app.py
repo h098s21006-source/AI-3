@@ -69,8 +69,57 @@ st.markdown("---")
 # ======================
 CONTENT_BY_LABEL: dict[str, dict[str, list[str]]] = {
     # 예)
+     "labels[0]": {
+       "texts": ["짬뽕의 특징과 유래", "국물 맛 포인트", "지역별 스타일 차이"],
+       "images": ["https://static.wtable.co.kr/image-resize/production/service/recipe/1033/1x1/be94ce10-5f15-4fbd-8923-91fe2bdb7b59.jpg"],
+       "videos": ["https://www.youtube.com/watch?v=TgnCZqHgShc"]
+     },
+}
+
+st.title("이미지 분류기 (Fastai) — 확률 막대 + 라벨별 고정 콘텐츠")
+
+# ======================
+# 세션 상태
+# ======================
+if "img_bytes" not in st.session_state:
+    st.session_state.img_bytes = None
+if "last_prediction" not in st.session_state:
+    st.session_state.last_prediction = None
+
+# ======================
+# 모델 로드
+# ======================
+FILE_ID = st.secrets.get("GDRIVE_FILE_ID", "1j5Btqv9U0xZfEqIsN-W-dtjb9no5YwdS")
+MODEL_PATH = st.secrets.get("MODEL_PATH", "model.pkl")
+
+@st.cache_resource
+def load_model_from_drive(file_id: str, output_path: str):
+    if not os.path.exists(output_path):
+        url = f"https://drive.google.com/uc?id={file_id}"
+        gdown.download(url, output_path, quiet=False)
+    return load_learner(output_path, cpu=True)
+
+with st.spinner("🤖 모델 로드 중..."):
+    learner = load_model_from_drive(FILE_ID, MODEL_PATH)
+st.success("✅ 모델 로드 완료")
+
+labels = [str(x) for x in learner.dls.vocab]
+st.write(f"**분류 가능한 항목:** `{', '.join(labels)}`")
+st.markdown("---")
+
+# ======================
+# 라벨 이름 매핑: 여기를 채우세요!
+# 각 라벨당 최대 3개씩 표시됩니다.
+# ======================
+CONTENT_BY_LABEL: dict[str, dict[str, list[str]]] = {
+    # 예)
     # "짬뽕": {
     #   "texts": ["짬뽕의 특징과 유래", "국물 맛 포인트", "지역별 스타일 차이"],
+    #   "images": ["https://.../jjampong1.jpg", "https://.../jjampong2.jpg"],
+    #   "videos": ["https://youtu.be/XXXXXXXXXXX"]
+    # },
+    # labels[0]: {
+    #   "texts": ["쫄면은", "여러사람들이", "좋아하고 많이먹는 음식이다"],
     #   "images": ["https://.../jjampong1.jpg", "https://.../jjampong2.jpg"],
     #   "videos": ["https://youtu.be/XXXXXXXXXXX"]
     # },
